@@ -278,6 +278,32 @@ async def on_voice_state_update(member, before, after):
                     pass
                 voice_data[user_id]["channel_id"] = None
                 save_data()      
+                
+RADIO_URL = "http://streaming.tdiradio.com:8000/house.mp3"
+@bot.tree.command(name="joinradio", description="📻 ให้บอทเข้าห้องเสียงและเล่นวิทยุ")
+async def joinradio(interaction: discord.Interaction):
+    if not interaction.user.voice or not interaction.user.voice.channel:
+        return await interaction.response.send_message("❌ คุณต้องอยู่ในห้องเสียงก่อน", ephemeral=True)
 
+    channel = interaction.user.voice.channel
+    vc = interaction.guild.voice_client
+    if vc and vc.is_connected():
+        await vc.disconnect()
+
+    vc = await channel.connect()
+
+    source = await discord.FFmpegOpusAudio.from_probe(RADIO_URL)
+    vc.play(source)
+    await interaction.response.send_message(f"📻 กำลังเล่นวิทยุใน `{channel.name}`", ephemeral=True)
+
+@bot.tree.command(name="leaveradio", description="🛑 ให้บอทออกจากห้องเสียง")
+async def leaveradio(interaction: discord.Interaction):
+    vc = interaction.guild.voice_client
+    if vc and vc.is_connected():
+        await vc.disconnect()
+        await interaction.response.send_message("👋 บอทออกจากห้องเสียงแล้ว", ephemeral=True)
+    else:
+        await interaction.response.send_message("❌ บอทยังไม่ได้อยู่ในห้องเสียง", ephemeral=True)
+        
 bot.run(os.environ["TOKEN"])
       
